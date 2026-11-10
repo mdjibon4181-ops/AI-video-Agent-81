@@ -3,43 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Video Agent</title>
+    <title>AI Video Generator</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        #output { margin-top: 20px; font-weight: bold; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        #start-btn {
+            background-color: #1e88e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+        }
+        #start-btn:hover {
+            background-color: #1565c0;
+        }
+        #output {
+            margin-bottom: 20px;
+            font-size: 1rem;
+            text-align: center;
+            color: #b0bec5;
+        }
+        .media-container {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: #1e1e1e;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 270px;
+        }
+        video, img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
     </style>
 </head>
 <body>
+
     <h1>AI Video Generator</h1>
     <button id="start-btn">কথা বলুন ও স্ক্রিপ্ট দিন</button>
     <div id="output">আপনার কমান্ড এখানে দেখা যাবে...</div>
 
+    <div class="media-container">
+        <img id="media-element" src="" alt="AI Generated Preview" style="display:none;" />
+    </div>
+
     <script>
-        // Register Service Worker for PWA
+        // Register Service Worker for PWA support
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
-                .then(() => console.log('Service Worker Registered'));
+                .then(() => console.log('Service Worker Registered'))
+                .catch(err => console.error('SW Registration Failed:', err));
         }
 
-        // Web Speech API for Bengali Voice Command
         const startBtn = document.getElementById('start-btn');
         const output = document.getElementById('output');
+        const mediaElement = document.getElementById('media-element');
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'bn-BD';
+        // Web Speech API for Bengali
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'bn-BD';
+            recognition.interimResults = false;
 
-        startBtn.addEventListener('click', () => {
-            recognition.start();
-            output.textContent = "শুনছি...";
-        });
+            startBtn.addEventListener('click', () => {
+                output.innerText = 'শুনছি...';
+                recognition.start();
+            });
 
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            output.textContent = "আপনি বলেছেন: " + transcript;
-            // Here you would send the transcript to your AI agent backend
-        };
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                output.innerText = `আপনি বলেছেন: ${transcript}`;
+                generateVideo(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                output.innerText = `ত্রুটি ঘটেছে: ${event.error}`;
+            };
+        } else {
+            startBtn.style.display = 'none';
+            output.innerText = 'আপনার ব্রাউজারে ভয়েস রিকগনিশন সাপোর্ট করে না।';
+        }
+
+        // Generate media via Pollinations.ai API
+        function generateVideo(prompt) {
+            output.innerText = 'মিডিয়া তৈরি হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...';
+            const encodedPrompt = encodeURIComponent(prompt);
+            const mediaUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1280&height=720&seed=${Math.floor(Math.random() * 1000)}`;
+
+            mediaElement.src = mediaUrl;
+            mediaElement.style.display = 'block';
+
+            mediaElement.onload = () => {
+                output.innerText = `তৈরি সম্পন্ন হয়েছে: "${prompt}"`;
+            };
+
+            mediaElement.onerror = () => {
+                output.innerText = 'মিডিয়া লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন።';
+            };
+        }
     </script>
 </body>
 </html>
-  
+
