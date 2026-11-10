@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Agent</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        #output { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>AI Video Generator</h1>
+    <button id="start-btn">কথা বলুন ও স্ক্রিপ্ট দিন</button>
+    <div id="output">আপনার কমান্ড এখানে দেখা যাবে...</div>
+
+    <script>
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker Registered'));
+        }
+
+        // Web Speech API for Bengali Voice Command
+        const startBtn = document.getElementById('start-btn');
+        const output = document.getElementById('output');
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'bn-BD';
+
+        startBtn.addEventListener('click', () => {
+            recognition.start();
+            output.textContent = "শুনছি...";
+        });
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            output.textContent = "আপনি বলেছেন: " + transcript;
+            // Here you would send the transcript to your AI agent backend
+        };
+    </script>
+</body>
+</html>
+  
